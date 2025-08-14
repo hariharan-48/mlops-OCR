@@ -1,0 +1,81 @@
+steps:
+  # Build RAG service
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '--platform=linux/amd64', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/ocr-repo-team1/rag-service-team1:v$SHORT_SHA', './rag-service']
+  
+  # Build Tesseract OCR service
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '--platform=linux/amd64', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/ocr-repo-team1/ocr-service-team1:v$SHORT_SHA', '.']
+  
+  # Build Cloud Vision OCR service
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '--platform=linux/amd64', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/ocr-repo-team1/vision-ocr-service-team1:v$SHORT_SHA', './ocr-cloud-vision']
+  
+  # Push all images
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/ocr-repo-team1/rag-service-team1:v$SHORT_SHA']
+  
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/ocr-repo-team1/ocr-service-team1:v$SHORT_SHA']
+  
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/ocr-repo-team1/vision-ocr-service-team1:v$SHORT_SHA']
+  
+  # Deploy RAG service first
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'rag-service-team1'
+      - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/ocr-repo-team1/rag-service-team1:v$SHORT_SHA'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--port=8080'
+      - '--memory=2Gi'
+      - '--cpu=2'
+      - '--max-instances=10'
+      - '--service-account=ocr-sa-team1@mlops-rag.iam.gserviceaccount.com'
+      - '--set-env-vars=GOOGLE_CLOUD_PROJECT=$PROJECT_ID,REGION=us-central1,SUFFIX=team1'
+  
+  # Deploy OCR services with hardcoded RAG URL
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'ocr-service-team1'
+      - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/ocr-repo-team1/ocr-service-team1:v$SHORT_SHA'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--port=8080'
+      - '--memory=1Gi'
+      - '--cpu=1'
+      - '--max-instances=10'
+      - '--service-account=ocr-sa-team1@mlops-rag.iam.gserviceaccount.com'
+      - '--set-env-vars=RAG_SERVICE_URL=https://rag-service-team1-f2melavagq-uc.a.run.app'
+  
+  # Deploy Cloud Vision OCR service
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'vision-ocr-service-team1'
+      - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/ocr-repo-team1/vision-ocr-service-team1:v$SHORT_SHA'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--port=8080'
+      - '--memory=1Gi'
+      - '--cpu=1'
+      - '--max-instances=10'
+      - '--service-account=ocr-sa-team1@mlops-rag.iam.gserviceaccount.com'
+      - '--set-env-vars=RAG_SERVICE_URL=https://rag-service-team1-f2melavagq-uc.a.run.app'
+
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/ocr-repo-team1/rag-service-team1:v$SHORT_SHA'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/ocr-repo-team1/ocr-service-team1:v$SHORT_SHA'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/ocr-repo-team1/vision-ocr-service-team1:v$SHORT_SHA'

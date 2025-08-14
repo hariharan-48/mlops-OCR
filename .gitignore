@@ -1,0 +1,39 @@
+# OS / Editor
+.DS_Store
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Notebooks/cache
+.ipynb_checkpoints/
+
+# Docker/logs
+*.log
+
+# Secrets/keys/certs (DO NOT COMMIT)
+.keys/
+certs/
+*.pem
+*.crt
+*.key
+.env
+
+# Node (if any)
+node_modules/
+
+# Misc
+*.swp
+*.swo

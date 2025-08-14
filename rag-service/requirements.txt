@@ -1,0 +1,5 @@
+fastapi==0.112.2
+uvicorn==0.30.6
+pydantic==2.5.0 
+google-cloud-aiplatform>=1.38.0
+google-cloud-storage>=2.10.0

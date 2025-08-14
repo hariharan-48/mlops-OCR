@@ -1,0 +1,6 @@
+fastapi==0.112.2
+uvicorn==0.30.6
+pillow==10.4.0
+google-cloud-vision==3.7.0
+python-multipart==0.0.9
+httpx==0.25.2 
