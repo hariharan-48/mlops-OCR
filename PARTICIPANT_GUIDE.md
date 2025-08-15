@@ -289,7 +289,8 @@ curl -X POST "$RAG_URL/query" \
 # First, get your RAG service URL to hardcode it
 RAG_URL=$(gcloud run services describe rag-service-$SUFFIX --region=$REGION --format='value(status.url)')
 echo "Your RAG service URL: $RAG_URL"
-replace the rag_service_url with above i the below cloud build file
+
+# replace the rag_service_url with above in the below cloud build file
 
 # Create cloudbuild.yaml for automated deployment
 cat > cloudbuild.yaml << EOF
@@ -413,8 +414,7 @@ gsutil mb -l $REGION gs://mlops-workshop-$SUFFIX-$PROJECT_ID
 ```bash
 # Upload sample images to your bucket
 
-  gsutil cp $PWD/sample/Sample-handwritten-text-input-for-OCR.png gs://mlops-workshop-$SUFFIX-$PROJECT_ID/
-
+gsutil cp $PWD/sample/Sample-handwritten-text-input-for-OCR.png gs://mlops-workshop-$SUFFIX-$PROJECT_ID/
 
 # List uploaded files
 gsutil ls gs://mlops-workshop-$SUFFIX-$PROJECT_ID/
