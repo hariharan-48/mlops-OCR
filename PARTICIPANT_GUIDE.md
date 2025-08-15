@@ -70,6 +70,9 @@ gcloud auth configure-docker us-central1-docker.pkg.dev
 **What this does:** Creates a private Docker image repository where your team's Docker images will be stored.
 
 ```bash
+# Config project
+gcloud config set project $PROJECT_ID
+
 # Create repository for your team's Docker images
 gcloud artifacts repositories create ocr-repo-$SUFFIX \
   --repository-format=docker \
@@ -108,6 +111,7 @@ gcloud run deploy rag-service-$SUFFIX \
 
 cd ..
 ```
+
 ``` bash
 RAG_URL=$(gcloud run services describe rag-service-$SUFFIX --region=$REGION --format='value(status.url)')
 curl $RAG_URL/health
@@ -120,8 +124,6 @@ curl $RAG_URL/health
 
 ```bash
 # Build Tesseract OCR service
-cd ..
-
 docker build --platform=linux/amd64 -t ocr-service-$SUFFIX .
 
 # Tag for Artifact Registry
@@ -150,7 +152,7 @@ gcloud run deploy ocr-service-$SUFFIX \
 OCR_URL=$(gcloud run services describe ocr-service-$SUFFIX --region=$REGION --format='value(status.url)')
 curl $OCR_URL/health
 
-  curl -X POST  -F "file=@/Users/hramachandran/Mlops-Trainig-OCR/sample/Sample-handwritten-text-input-for-OCR.png" "$OCR_URL/ocr"  
+curl -X POST  -F "file=@$PWD/sample/Sample-handwritten-text-input-for-OCR.png" "$OCR_URL/ocr"  
 ```
 
 **Explanation:** Tesseract OCR provides free text extraction from images. It's integrated with the RAG service so extracted text can be automatically indexed for AI-powered Q&A. The `--service-account` parameter ensures consistent permissions across all services.
@@ -188,7 +190,7 @@ cd ..
 VISION_URL=$(gcloud run services describe vision-ocr-service-$SUFFIX --region=$REGION --format='value(status.url)')
 curl $VISION_URL/health
 
-  curl -X POST  -F "file=@/Users/hramachandran/Mlops-Trainig-OCR/sample/Sample-handwritten-text-input-for-OCR.png" "$VISION_URL/ocr"  
+curl -X POST  -F "file=@$PWD/sample/Sample-handwritten-text-input-for-OCR.png" "$VISION_URL/ocr"  
 ```
 
 **Explanation:** Cloud Vision API provides much higher accuracy for OCR, especially for handwritten text, making it suitable for production use cases. It's also integrated with the RAG service. The `--service-account` parameter ensures consistent permissions across all services.
@@ -236,12 +238,12 @@ curl $VISION_URL/health
 if [ -f "Sample-handwritten-text-input-for-OCR.png" ]; then
   echo "Testing Tesseract OCR..."
   curl -X POST "$OCR_URL/ocr" \
-    -F "file=@/Users/hramachandran/Mlops-Trainig-OCR/sample/Sample-handwritten-text-input-for-OCR.png" \
+    -F "file=@$PWD/sample/Sample-handwritten-text-input-for-OCR.png" \
     -F "lang=en" | jq '.'
   
   echo "Testing Cloud Vision OCR..."
   curl -X POST "$VISION_URL/ocr" \
-    -F "file=@/Users/hramachandran/Mlops-Trainig-OCR/sample/Sample-handwritten-text-input-for-OCR.png" \
+    -F "file=@$PWD/sample/Sample-handwritten-text-input-for-OCR.png" \
     -F "lang=en" | jq '.'
 else
   echo "Sample image not found. You can test with any image file."
@@ -257,13 +259,13 @@ fi
 # Test complete pipeline with Tesseract OCR
 echo "Testing Tesseract OCR + RAG pipeline..."
 curl -X POST "$OCR_URL/ocr-and-index" \
-  -F "file=@/Users/hramachandran/Mlops-Trainig-OCR/sample/Sample-handwritten-text-input-for-OCR.png" \
+  -F "file=@$PWD/sample/Sample-handwritten-text-input-for-OCR.png" \
   -F "enable_rag=true" | jq '.'
 
 # Test complete pipeline with Cloud Vision OCR
 echo "Testing Cloud Vision OCR + RAG pipeline..."
 curl -X POST "$VISION_URL/ocr-and-index" \
-  -F "file=@/Users/hramachandran/Mlops-Trainig-OCR/sample/Sample-handwritten-text-input-for-OCR.png" \
+  -F "file=@$PWD/sample/Sample-handwritten-text-input-for-OCR.png" \
   -F "enable_rag=true" | jq '.'
 
 # Test RAG query
@@ -287,7 +289,8 @@ curl -X POST "$RAG_URL/query" \
 # First, get your RAG service URL to hardcode it
 RAG_URL=$(gcloud run services describe rag-service-$SUFFIX --region=$REGION --format='value(status.url)')
 echo "Your RAG service URL: $RAG_URL"
-replace the rag_service_url with above i the below cloud build file
+
+# replace the rag_service_url with above in the below cloud build file
 
 # Create cloudbuild.yaml for automated deployment
 cat > cloudbuild.yaml << EOF
@@ -411,8 +414,7 @@ gsutil mb -l $REGION gs://mlops-workshop-$SUFFIX-$PROJECT_ID
 ```bash
 # Upload sample images to your bucket
 
-  gsutil cp /Users/hramachandran/Mlops-Trainig-OCR/sample/Sample-handwritten-text-input-for-OCR.png gs://mlops-workshop-$SUFFIX-$PROJECT_ID/
-
+gsutil cp $PWD/sample/Sample-handwritten-text-input-for-OCR.png gs://mlops-workshop-$SUFFIX-$PROJECT_ID/
 
 # List uploaded files
 gsutil ls gs://mlops-workshop-$SUFFIX-$PROJECT_ID/
